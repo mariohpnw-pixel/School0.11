@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ตารางเรียน">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffc928">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>ตารางเรียน อนุบาล 3/1</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;700&family=Sarabun:wght@400;600&display=swap">
 <style>
@@ -72,6 +79,10 @@ h1{font-family:var(--display);font-size:1.6rem;margin:0;text-wrap:balance}
   <button class="play hello" id="hello">🔊 วันนี้วันอะไรนะ?</button>
   <div class="tabs" id="tabs"></div>
   <div id="day"></div>
+  <div class="note" id="installbox" hidden>
+    <button class="play" id="installbtn" style="margin-top:0">📲 ติดตั้งลงหน้าจอ</button>
+    <p class="hint" id="installhint"></p>
+  </div>
   <details class="note" id="voicebox">
     <summary><b>🔧 เลือกเสียง</b></summary>
     <div class="vset">
@@ -165,6 +176,19 @@ document.getElementById('vpitch').addEventListener('change',e=>{ PITCH=+e.target
 document.getElementById('vtest').addEventListener('click',()=>{ if(syn)syn.cancel(); say('สวัสดีจ้ะ ตอนแปดโมงยี่สิบนาที เรียนคอมพิวเตอร์นะคะ'); });
 document.getElementById('hello').addEventListener('click',()=>{ if(syn)syn.cancel(); say(helloSay()); });
 render();
+// ติดตั้งเป็นแอป
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+(function(){
+  const box=document.getElementById('installbox'), btn=document.getElementById('installbtn'), hint=document.getElementById('installhint');
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(standalone) return;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  let ev=null;
+  addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); ev=e; box.hidden=false; hint.textContent=''; });
+  addEventListener('appinstalled',()=>{ box.hidden=true; });
+  if(ios){ box.hidden=false; btn.hidden=true; hint.textContent='ติดตั้งบน iPhone/iPad: เปิดใน Safari แล้วกดปุ่มแชร์ ⬆️ เลือก "เพิ่มไปยังหน้าจอโฮม"'; }
+  btn.addEventListener('click',async()=>{ if(!ev){ hint.textContent='เปิดเมนู ⋮ ของเบราว์เซอร์ แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอหลัก"'; return; } ev.prompt(); await ev.userChoice; ev=null; box.hidden=true; });
+})();
 </script>
 </body>
 </html>
