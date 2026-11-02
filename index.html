@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ตารางเรียน อนุบาล 3/1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;700&family=Sarabun:wght@400;600&display=swap">
+<style>
+/* Layout: big colored day tabs on top, then one day's timeline as chunky picture rows */
+:root{
+  --bg:#fffaf3; --card:#ffffff; --fg:#2b2440; --muted:#6f6787; --line:#ece4f5;
+  --mon:#ffc928; --tue:#ff7ab8; --wed:#3cc46b; --thu:#ff7a3d; --fri:#3d8bff;
+  --break:#f3eefa;
+  --display:"Mali","Sarabun",system-ui,sans-serif; --body:"Sarabun",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1c1828; --card:#272236; --fg:#f6f1ff; --muted:#b5abcc; --line:#3a3350; --break:#221d31; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1c1828; --card:#272236; --fg:#f6f1ff; --muted:#b5abcc; --line:#3a3350; --break:#221d31; color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px}
+.wrap{max-width:640px;margin:0 auto;padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-family:var(--display);font-size:1.6rem;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 18px;font-size:.92rem}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tab{font-family:var(--display);font-weight:700;border:3px solid transparent;border-radius:16px;
+  padding:10px 2px;font-size:1rem;cursor:pointer;color:#2b2440;background:var(--c);opacity:.55;position:relative}
+.tab.on{opacity:1;border-color:var(--fg);transform:translateY(-2px)}
+.tab:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.tab small{display:block;font-size:.7rem;font-weight:500}
+.today{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);
+  font-size:.62rem;padding:1px 6px;border-radius:8px;white-space:nowrap}
+.dayhead{margin-top:18px;border-radius:20px;padding:16px;background:var(--c);color:#2b2440;
+  display:flex;align-items:center;gap:14px}
+.dayhead .big{font-size:3.4rem;line-height:1}
+.dayhead h2{font-family:var(--display);margin:0;font-size:1.5rem}
+.dayhead p{margin:2px 0 0;font-weight:600}
+.list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.row{display:grid;grid-template-columns:54px 70px 1fr;align-items:center;gap:10px;
+  background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.row.br{background:var(--break);border-style:dashed}
+.row.br .ic{font-size:1.6rem}
+.time{font-variant-numeric:tabular-nums;font-weight:600;font-size:.85rem;color:var(--muted);line-height:1.25}
+.ic{font-size:3rem;text-align:center}
+.what{min-width:0}
+.what b{font-family:var(--display);font-size:1.25rem;display:block}
+.what span{color:var(--muted);font-size:.85rem}
+.row.special{border-color:var(--c);border-width:3px}
+.row,.dayhead{cursor:pointer}
+.row:focus-visible,.dayhead:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.row.talk{border-color:var(--c);border-width:3px;transform:scale(1.03);transition:transform .15s}
+.play{margin-top:12px;width:100%;font-family:var(--display);font-weight:700;font-size:1.15rem;padding:12px;border-radius:16px;border:3px solid var(--fg);background:var(--card);color:var(--fg);cursor:pointer}
+.hint{color:var(--muted);font-size:.85rem;text-align:center;margin:6px 0 0}
+@media (prefers-reduced-motion:reduce){.row.talk{transform:none}}
+.hello{margin:0 0 16px;background:var(--c,var(--card))}
+.vset{display:grid;gap:6px;margin-top:10px}
+.vset select{font:inherit;padding:8px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--fg)}
+.note summary{cursor:pointer;font-family:var(--display)}
+.note{margin-top:22px;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 16px;font-size:.9rem}
+.note h3{font-family:var(--display);margin:0 0 6px;font-size:1.05rem}
+.note ul{margin:0;padding-left:20px;display:grid;gap:3px}
+@media (prefers-reduced-motion:reduce){.tab.on{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>ตารางเรียนของหนู 🎒</h1>
+  <p class="sub">อนุบาล 3/1</p>
+  <button class="play hello" id="hello">🔊 วันนี้วันอะไรนะ?</button>
+  <div class="tabs" id="tabs"></div>
+  <div id="day"></div>
+  <details class="note" id="voicebox">
+    <summary><b>🔧 เลือกเสียง</b></summary>
+    <div class="vset">
+      <label for="vsel">เสียง</label>
+      <select id="vsel"></select>
+      <label for="vrate">ความเร็ว</label>
+      <select id="vrate"><option value="0.65">ช้ามาก</option><option value="0.8" selected>ช้า</option><option value="1">ปกติ</option></select>
+      <label for="vpitch">เสียงสูงต่ำ</label>
+      <select id="vpitch"><option value="0.9">ทุ้ม นุ่ม</option><option value="1.05" selected>พอดี</option><option value="1.25">สดใส</option></select>
+      <button class="play" id="vtest" style="margin-top:4px">▶️ ลองฟัง</button>
+      <p class="hint" id="vcount"></p>
+    </div>
+  </details>
+  </div>
+
+<script>
+const T=[["07:50","08:20"],["08:20","09:10"],["09:10","10:00"],["10:00","10:10"],["10:10","11:00"],["11:00","12:00"],["12:00","12:50"],["12:50","13:40"],["13:40","14:30"],["14:30","15:00"]];
+const MORNING={i:"🇹🇭",t:"เข้าแถว ไหว้พระ",v:"เข้าแถว เคารพธงชาติ แล้วก็ไหว้พระ",br:1};
+const MILK={i:"🥛",t:"ดื่มนม",v:"พักดื่มนมให้แข็งแรง",br:1};
+const LUNCH={i:"🍚",t:"กินข้าว",v:"กินข้าวกลางวันให้อร่อย",br:1};
+const NAP={i:"🪥",t:"แปรงฟัน นอน",v:"แปรงฟัน แล้วก็นอนพักผ่อน",br:1};
+const HOME={i:"🏠",t:"กินขนม กลับบ้าน",v:"กินขนม แล้วก็เตรียมตัวกลับบ้าน",br:1};
+const P=(i,t,s,sp)=>({i,t,s,sp});
+const DAYS=[
+ {n:"จันทร์",c:"--mon",e:"🌞",u:"ชุดนักเรียน",col:"",ui:"👔",p:[
+   P("💻","คอมพิวเตอร์","ครูริน",1),P("🤸","เต้น เล่นเกม","ครูบุษยา"),P("🎨","เรียนกับครู วาดรูป","ครูบุษยา"),
+   P("🐼","ภาษาจีน","L. Ja",1),P("🔤","ภาษาอังกฤษ","T. Sheena",1)]},
+ {n:"อังคาร",c:"--tue",e:"🌸",u:"ชุดนักเรียน",col:"",ui:"👔",p:[
+   P("🤸","เต้น เรียนกับครู","ครูบุษยา"),P("⚽","เล่นเกม เล่นข้างนอก","ครูบุษยา"),P("🏊","ว่ายน้ำ","ครูปณิธิ / ครูวิศรุต",1),
+   P("🔤","ภาษาอังกฤษ","T. Jo",1),P("🧩","เล่นเกม เล่นของเล่น","ครูบุษยา")]},
+ {n:"พุธ",c:"--wed",e:"🌿",u:"ชุดพละ",col:"",ui:"👟",p:[
+   P("🎵","ดนตรี","ครูดนตรี",1),P("🤸","เต้น เรียนกับครู","ครูบุษยา"),P("⚽","เล่นเกม เล่นข้างนอก","ครูบุษยา"),
+   P("🐼","ภาษาจีน","L. Nam",1),P("🧩","เล่นเกม เล่นของเล่น","ครูบุษยา")]},
+ {n:"พฤหัสบดี",c:"--thu",e:"🍊",u:"ชุดนักเรียน",col:"",ui:"👔",p:[
+   P("🧮","จินตคณิต","ครูจินตคณิต",1),P("🖌️","วาดรูป / รำไทย","ครูพิมพ์นารา / ครูนชนาฎ",1),P("🤸","เต้น เรียนกับครู","ครูบุษยา"),
+   P("🏖️","เล่นทราย","",1),P("🧩","เล่นเกม เล่นของเล่น","ครูบุษยา")]},
+ {n:"ศุกร์",c:"--fri",e:"🐳",u:"ชุดผ้าไทย",col:"",ui:"🪷",p:[
+   P("⚽","เล่นข้างนอก เต้น","ครูบุษยา"),P("🧩","เรียนกับครู เล่นเกม","ครูบุษยา"),P("🔤","ภาษาอังกฤษ","T. Jo",1),
+   P("🐼","ภาษาจีน","L. Ja",1),P("🎨","วาดรูป เล่นของเล่น","ครูบุษยา")]}
+];
+const wd=new Date().getDay(); const todayIdx=(wd>=1&&wd<=5)?wd-1:-1;
+const NUM={10:"สิบ",20:"ยี่สิบ",30:"สามสิบ",40:"สี่สิบ",50:"ห้าสิบ"};
+const HR={7:"เจ็ดโมง",8:"แปดโมง",9:"เก้าโมง",10:"สิบโมง",11:"สิบเอ็ดโมง",12:"เที่ยง",13:"บ่ายโมง",14:"บ่ายสองโมง",15:"บ่ายสามโมง"};
+function tw(t){const [h,m]=t.split(":").map(Number); if(m===0)return HR[h]+"ตรง"; if(m===30)return HR[h]+"ครึ่ง"; return HR[h]+NUM[m]+"นาที";}
+function wear(d){return "ใส่"+d.u+(d.col?" สี"+d.col:"");}
+function headSay(i){const d=DAYS[i]; return (i===todayIdx?"วันนี้วัน"+d.n+"จ้ะ วันนี้":"วัน"+d.n+" ")+"หนู"+wear(d)+"ไปโรงเรียนนะคะ";}
+function rowSay(it,k){let w=it.v||it.t.replace(" / "," หรือ "); if(it.sp&&!/^เล่น|^วาด/.test(w))w="เรียน"+w; return "ตอน"+tw(T[k][0])+" "+w+" นะคะ";}
+const THNAME=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
+function helloSay(){ if(todayIdx<0) return "สวัสดีจ้ะ วันนี้วัน"+THNAME[wd]+" เป็นวันหยุด ไม่ต้องไปโรงเรียนนะคะ พักผ่อนให้สบายเลยจ้ะ";
+  return "สวัสดีจ้ะ "+headSay(todayIdx)+" ไปโรงเรียนให้สนุกนะจ๊ะ";}
+
+let sel=0; try{const s=localStorage.getItem("sched-day"); if(s!==null) sel=+s;}catch(e){}
+if(todayIdx>=0) sel=todayIdx;
+const tabs=document.getElementById("tabs"), day=document.getElementById("day");
+function render(){
+  tabs.innerHTML=DAYS.map((d,i)=>`<button class="tab ${i===sel?"on":""}" id="tab${i}" style="--c:var(${d.c})" data-i="${i}">${i===todayIdx?'<span class="today">วันนี้</span>':""}${d.e}<small>${d.n}</small></button>`).join("");
+  const d=DAYS[sel], p=d.p;
+  const items=[MORNING,p[0],p[1],MILK,p[2],LUNCH,NAP,p[3],p[4],HOME];
+  day.innerHTML=`<div class="dayhead" role="button" tabindex="0" data-say="${headSay(sel)}" style="--c:var(${d.c})"><div class="big">${d.e}</div><div><h2>วัน${d.n}</h2><p>${d.ui} ${d.u}${d.col?" สี"+d.col:""}</p></div></div>
+  <button class="play" id="playall">🔊 ฟังทั้งวัน</button><p class="hint" id="hint">แตะที่รูปเพื่อฟังเสียง</p><div class="list">${items.map((it,k)=>`<div class="row ${it.br?"br":""} ${it.sp?"special":""}" role="button" tabindex="0" data-say="${rowSay(it,k)}" style="--c:var(${d.c})">
+    <div class="time">${T[k][0]}<br>${T[k][1]}</div><div class="ic">${it.i}</div>
+    <div class="what"><b>${it.t}</b></div></div>`).join("")}</div>`;
+}
+tabs.addEventListener("click",e=>{const b=e.target.closest(".tab"); if(!b)return; sel=+b.dataset.i; try{localStorage.setItem("sched-day",sel)}catch(e){} render(); say(headSay(sel),document.querySelector(".dayhead"));});
+const syn=window.speechSynthesis; let thai=null; let RATE=.8, PITCH=1.05, saved={};
+try{saved=JSON.parse(localStorage.getItem('sched-voice')||'{}')}catch(e){}
+if(saved.rate)RATE=+saved.rate; if(saved.pitch)PITCH=+saved.pitch;
+function pickVoice(){ if(!syn)return; const v=syn.getVoices(); const th=v.filter(x=>/^th/i.test(x.lang)); thai=th.find(x=>x.name===saved.name)||th.find(x=>/kanya|narisa|premwadee|achara|female|หญิง/i.test(x.name))||th[0]||null;
+  const vs=document.getElementById('vsel'), vc=document.getElementById('vcount');
+  vs.innerHTML=th.map(x=>`<option value="${x.name}" ${thai&&x.name===thai.name?'selected':''}>${x.name.replace(/\s*\(.*\)/,'')}</option>`).join('')||'<option>ไม่พบเสียงภาษาไทย</option>';
+  vc.textContent=th.length?`เครื่องนี้มีเสียงภาษาไทย ${th.length} เสียง`:'เครื่องนี้ยังไม่มีเสียงภาษาไทย ลองเพิ่มในการตั้งค่าโทรศัพท์';
+  vs._list=th; }
+if(syn){pickVoice(); syn.onvoiceschanged=pickVoice;}
+function mark(el){document.querySelectorAll('.talk').forEach(x=>x.classList.remove('talk')); if(el)el.classList.add('talk');}
+function say(text,el,onend){
+  if(!syn){const h=document.getElementById('hint'); if(h)h.textContent='เครื่องนี้เปิดเสียงอ่านไม่ได้ ลองเปิดใน Safari หรือ Chrome นะคะ'; return;}
+  const u=new SpeechSynthesisUtterance(text); u.lang='th-TH'; if(thai)u.voice=thai; u.rate=RATE; u.pitch=PITCH;
+  mark(el); u.onend=()=>{mark(null); onend&&onend();}; u.onerror=()=>mark(null);
+  syn.speak(u);
+}
+day.addEventListener('click',e=>{
+  if(e.target.closest('#playall')){ if(syn)syn.cancel(); const els=[document.querySelector('.dayhead'),...document.querySelectorAll('.row')]; let k=0; const next=()=>{ if(k<els.length){const el=els[k++]; say(el.dataset.say,el,next);} else say('หมดวันแล้ว หนูเก่งมากเลยจ้ะ'); }; next(); return; }
+  const el=e.target.closest('[data-say]'); if(!el)return; if(syn)syn.cancel(); say(el.dataset.say,el);
+});
+day.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.dataset&&e.target.dataset.say){e.preventDefault(); e.target.click();} });
+document.getElementById('vrate').value=String(RATE); document.getElementById('vpitch').value=String(PITCH);
+function saveVoice(){ try{localStorage.setItem('sched-voice',JSON.stringify({name:thai&&thai.name,rate:RATE,pitch:PITCH}))}catch(e){} saved={name:thai&&thai.name}; }
+document.getElementById('vsel').addEventListener('change',e=>{ const l=e.target._list||[]; thai=l.find(x=>x.name===e.target.value)||thai; saveVoice(); if(syn)syn.cancel(); say('สวัสดีจ้ะ เสียงนี้เป็นยังไงบ้างคะ'); });
+document.getElementById('vrate').addEventListener('change',e=>{ RATE=+e.target.value; saveVoice(); });
+document.getElementById('vpitch').addEventListener('change',e=>{ PITCH=+e.target.value; saveVoice(); });
+document.getElementById('vtest').addEventListener('click',()=>{ if(syn)syn.cancel(); say('สวัสดีจ้ะ ตอนแปดโมงยี่สิบนาที เรียนคอมพิวเตอร์นะคะ'); });
+document.getElementById('hello').addEventListener('click',()=>{ if(syn)syn.cancel(); say(helloSay()); });
+render();
+</script>
+</body>
+</html>
